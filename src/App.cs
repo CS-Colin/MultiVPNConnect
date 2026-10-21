@@ -10,16 +10,16 @@ using System.Collections.Generic;
 using System.Security.Cryptography;
 using System.Threading.Tasks;
 using System.Threading;
-[assembly: System.Reflection.AssemblyVersion("0.3.0.0")]
-[assembly: System.Reflection.AssemblyFileVersion("0.3.0.0")]
+[assembly: System.Reflection.AssemblyVersion("0.3.2.0")]
+[assembly: System.Reflection.AssemblyFileVersion("0.3.2.0")]
 class Profile { public string Name {get;set;} public string Kind {get;set;} public string Path {get;set;} public string EngineName {get;set;} }
 class MainWindow : Form {
- const string Version="0.3.0";
+ const string Version="0.3.2";
  string home=Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),"MultiVPNConnect");
  Label profileCount,protocol,statusTitle,guidance,engineNote;ConnectionOrb orb;TextBox search;Button importButton,sophosButton,removeButton;
  List<Profile> profiles=new List<Profile>(); ListBox list=new ListBox();Label detail=new Label(),status=new Label();TextBox logs=new TextBox();Button connect,disconnect;VpnSession session;bool busy,polling,closing;System.Windows.Forms.Timer timer=new System.Windows.Forms.Timer();
  public MainWindow(){
-  Text="MultiVPNConnect";ClientSize=new Size(1120,760);MinimumSize=new Size(1000,730);StartPosition=FormStartPosition.CenterScreen;BackColor=Palette.Background;ForeColor=Palette.Text;Font=new Font("Segoe UI",10);AutoScaleMode=AutoScaleMode.Dpi;AutoScaleDimensions=new SizeF(96,96);
+  Text="MultiVPNConnect";Icon=Branding.LoadIcon();ShowIcon=true;ShowInTaskbar=true;ClientSize=new Size(1120,760);MinimumSize=new Size(1000,730);StartPosition=FormStartPosition.CenterScreen;BackColor=Palette.Background;ForeColor=Palette.Text;Font=new Font("Segoe UI",10);AutoScaleMode=AutoScaleMode.Dpi;AutoScaleDimensions=new SizeF(96,96);
   Directory.CreateDirectory(home);try{string file=Path.Combine(home,"profiles.json");if(File.Exists(file))profiles=new JavaScriptSerializer().Deserialize<List<Profile>>(File.ReadAllText(file));}catch{MessageBox.Show("Saved profiles could not be loaded. Original configuration files are unchanged.");}
   var shell=new TableLayoutPanel{Dock=DockStyle.Fill,Padding=new Padding(24,16,24,16),ColumnCount=1,RowCount=3};shell.RowStyles.Add(new RowStyle(SizeType.Absolute,78));shell.RowStyles.Add(new RowStyle(SizeType.Percent,100));shell.RowStyles.Add(new RowStyle(SizeType.Absolute,38));Controls.Add(shell);
   var header=new Panel{Dock=DockStyle.Fill};shell.Controls.Add(header,0,0);
@@ -79,6 +79,8 @@ class MainWindow : Form {
 
  [STAThread] static void Main(){bool created;using(var mutex=new Mutex(true,"Local\\MultiVPNConnect.Desktop",out created)){if(!created){MessageBox.Show("MultiVPNConnect is already running. Open its existing window.");return;}Application.EnableVisualStyles();Application.SetCompatibleTextRenderingDefault(false);Application.Run(new MainWindow());}}
 }
+
+
 
 
 
