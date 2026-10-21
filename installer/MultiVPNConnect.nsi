@@ -6,7 +6,7 @@ Unicode true
 !include "Sections.nsh"
 !include "x64.nsh"
 !ifndef APP_VERSION
- !define APP_VERSION "0.3.2"
+ !define APP_VERSION "0.5.0"
 !endif
 !ifndef BUILD_DIR
  !error "Pass BUILD_DIR pointing to compiled app files."
@@ -244,6 +244,3 @@ Section "Uninstall"
   Abort
  uninstall_done:
 SectionEnd
-
-
-

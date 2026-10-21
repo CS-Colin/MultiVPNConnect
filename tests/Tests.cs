@@ -8,13 +8,16 @@ class Tests {
   bool rejected=false;try{VpnSession.Arg("bad\nargument");}catch{rejected=true;}Check(rejected,"Argument injection rejected");
   string status="Connections:\n  One\n    VPN state: disconnected\n  Two\n    VPN state: connected\n";
   Check(VpnSession.SophosState(status,"One")=="Disconnected","Disconnected is not confused with connected");Check(VpnSession.SophosState(status,"Two")=="Connected","Sophos state matched by connection name");Check(VpnSession.SophosState(status,"Missing")=="Status unavailable","Missing Sophos status is not reported connected");
+  await InternetIdentityTests.Run();
+  NetworkFactsTests.Run();
+  DesktopTests.Metrics();
   VpnSession.TestEngine=fake;var connected=new TaskCompletionSource<bool>();var session=new VpnSession();session.Changed=s=>{if(s=="Connected")connected.TrySetResult(true);};session.Credentials=(title,user)=>new[]{"test user","dummy\\\"password"};string config=Path.Combine(home,"test.ovpn");File.WriteAllText(config,"client");await session.Connect(new Profile{Name="Test",Kind="OpenVPN",Path=config},home);Check(await Task.WhenAny(connected.Task,Task.Delay(5000))==connected.Task,"OpenVPN management authentication and connected state");Check(await session.Status()=="Connected","Status follows engine acknowledgement");await session.Disconnect();Check(await session.Status()=="Disconnected","Graceful OpenVPN disconnect confirmed by process exit");Check(Directory.GetDirectories(Path.Combine(home,"sessions")).Length==0,"Temporary management key removed");
   var cancelled=new VpnSession();cancelled.Credentials=(title,user)=>null;await cancelled.Connect(new Profile{Name="Cancel",Kind="OpenVPN",Path=config},home);await Task.Delay(500);await cancelled.Disconnect();Check(await cancelled.Status()=="Disconnected","Cancelled authentication cleans up engine");
   if(args.Length>2){
    VpnSession.TestEngine=Path.GetFullPath(args[2]);
    File.WriteAllText(config,"dev null\nproto udp\nremote 127.0.0.1 9\nifconfig-noexec\nroute-noexec\n");
-   var real=new VpnSession();var started=new TaskCompletionSource<bool>();real.Changed=value=>{Console.WriteLine("Engine: "+value);if(value=="ASSIGN_IP"||value=="Connected")started.TrySetResult(true);};
-   Exception failed=null;try{await real.Connect(new Profile{Name="Loopback engine test",Kind="OpenVPN",Path=config},home);Check(await Task.WhenAny(started.Task,Task.Delay(5000))==started.Task,"Installed OpenVPN engine management bootstrap (null device, loopback only)");}catch(Exception ex){failed=ex;}await real.Disconnect();if(failed!=null)throw failed;
+   var real=new VpnSession();var started=new TaskCompletionSource<bool>();real.Changed=value=>{Console.WriteLine("Engine: "+value);if(value=="CONNECTING"||value=="ASSIGN_IP"||value=="Connected")started.TrySetResult(true);};
+   Exception failed=null;try{await real.Connect(new Profile{Name="Loopback engine test",Kind="OpenVPN",Path=config},home);Check(await Task.WhenAny(started.Task,Task.Delay(5000))==started.Task,"Installed OpenVPN engine management authentication and state subscription (localhost only)");}catch(Exception ex){failed=ex;}await real.Disconnect();if(failed!=null)throw failed;
    Check(await real.Status()=="Disconnected","Installed OpenVPN engine graceful shutdown");
   }
   // Instantiate the actual UI on an STA thread without activating any tunnel.
@@ -28,12 +31,6 @@ search.Text="wireguard";Application.DoEvents();Check(list.Items.Count==1&&((Prof
 search.Text="no matching profile";Application.DoEvents();Check(list.Items.Count==0&&!((Button)typeof(MainWindow).GetField("connect",flags).GetValue(form)).Enabled,"Empty search disables Connect");
 search.Text="";Application.DoEvents();Check(list.Items.Count==2,"Clearing search restores connections");
 ((Label)typeof(MainWindow).GetField("status",flags).GetValue(form)).Text="Connected";Application.DoEvents();Check(((Label)typeof(MainWindow).GetField("statusTitle",flags).GetValue(form)).Text=="Connected","Status card follows session state");
-form.Close();}}catch(Exception ex){uiFailure=ex;}});thread.SetApartmentState(ApartmentState.STA);thread.Start();thread.Join();if(uiFailure!=null)throw uiFailure;
+DesktopTests.Window(form);form.Close();}}catch(Exception ex){uiFailure=ex;}});thread.SetApartmentState(ApartmentState.STA);thread.Start();thread.Join();if(uiFailure!=null)throw uiFailure;
  }
 }
-
-
-
-
-
-

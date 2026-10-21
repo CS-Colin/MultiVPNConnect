@@ -1,4 +1,4 @@
-# MultiVPNConnect 0.3.2
+# MultiVPNConnect 0.5.0
 
 Version 0.3.2 loads the window icon directly from an embedded branding resource and includes nine native icon sizes for the taskbar and display scaling. Native Windows small/large window-icon checks passed.
 
@@ -7,11 +7,29 @@ Version 0.3 adds a redesigned dark interface with searchable connections, protoc
 Windows VPN desktop app with in-app Connect, Disconnect, sign-in prompts, connection status, and session events. Uses installed VPN engines without handing you off to their separate graphical interfaces.
 
 ## Install and use
-Run `dist/0.3.2/MultiVPNConnect-Setup.exe`, then launch from the Start menu. Accept Windows administrator permission so the engines can configure adapters and routes. Existing profile references from 0.1 are retained.
+Run `dist/0.5.0/MultiVPNConnect-Setup.exe`, then launch from the Start menu. Accept Windows administrator permission so the engines can configure adapters and routes. Existing profile references from 0.1 are retained.
 
 1. Import a WireGuard `.conf`, OpenVPN `.ovpn`, or Sophos `.scx`, `.tgb`, or `.pro` file. Keep the original file and its certificate dependencies in place.
 2. Alternatively select **Use Sophos profiles** to load names of connections already imported into the installed Sophos engine.
 3. Select a profile and click **Connect**. Enter credentials when requested. Click **Disconnect** to stop the session.
+
+## Tray and connection details (0.4.0)
+
+Minimise the window to keep the app and current session running in the system tray. Double-click the shield or choose **Open MultiVPNConnect** to restore it. Right-click the tray icon to see status, connect the selected profile, disconnect, or exit. Exit and the window close button retain the existing disconnect-and-close confirmation for a managed session. Relaunching the app restores an existing hidden instance. Tray icons and timers are disposed on exit.
+
+The details strip shows connected time observed during the current managed session, the assigned VPN address when available, and engine-reported received/sent byte totals. The duration pauses during reconnecting and clears when the managed session ends. The public Internet egress address is checked using https://api64.ipify.org over HTTPS on startup, after a session-state change, on manual Refresh IP, and once a minute. The request follows the current system route/proxy, so split-tunnel connections may show the ISP address rather than the VPN gateway. A fresh HTTP client avoids reusing a socket from the previous route. Requests time out after eight seconds; failures show Unavailable. Previous in-flight results are discarded after session changes. The PC hostname is read locally and is never included in lookup requests. Hostname means this computer's name, not reverse DNS for the public IP. Unavailable fields are labeled explicitly rather than displayed as zero.
+
+OpenVPN reports the assigned address and counters through its management interface. WireGuard uses its matching tunnel interface and peer transfer counters. Sophos supplies network counters through SCCLI; its `Local IP` may be the outer transport address, so the app only labels an explicitly identified virtual/tunnel address as the VPN address. Some Sophos versions will therefore show the VPN address as unavailable. Engine counters may include traffic before this app adopted an existing tunnel and are not lifetime account totals.
+
+Validated: metric parsing and formatting, duration tracking, stale-address clearing, tray registration, minimise/restore while retaining the session, tray action availability, shared Disconnect action, Exit cleanup, existing simulator authentication/disconnection, a real OpenVPN localhost management check, and installer lifecycle tests. GUI layouts were rendered and inspected at normal and minimum window sizes. No new real remote tunnel was activated during these checks.
+
+## Network details (0.5.0)
+
+The Connection details tab includes live download/upload rates calculated from engine byte-counter deltas, configured server hostname and active address (hover for full values), ICMP server latency, matched-adapter DNS servers, and per-family tunnel routes. The Activity tab keeps the log accessible without crowding the details panel.
+
+Server facts refresh at most once every ten seconds while the tunnel is active. Ping is sent only to an engine-reported IP address; no reply is labeled distinctly and does not mean the VPN has failed. DNS values are the matched adapter settings, not a guarantee about Windows NRPT/DoH policy. Full/Split labels describe routes present on the VPN interface, including paired /1 default halves, separately for IPv4 and IPv6. They do not prove effective route precedence or rule out traffic leaks. Missing adapter identity or engine fields are reported as Unavailable. Multi-peer WireGuard displays the first reported peer endpoint; hover shows both the configured host and active address.
+
+Speed/reset parsing, route-table decoding, routing classification, endpoint parsing, existing network/tray controls, and installer lifecycle checks passed. No remote tunnel was newly activated during these checks. The existing v0.3.0/v0.3.2 source tags are retained; historical binary releases without retained source snapshots are labeled as archives in their release notes.
 
 ## Engines
 - WireGuard: installs an app-owned tunnel service using the official WireGuard Windows command interface. Status distinguishes an active interface from a recent successful handshake. Configurations copied for the service have restricted filesystem permissions.
@@ -21,7 +39,7 @@ Run `dist/0.3.2/MultiVPNConnect-Setup.exe`, then launch from the Start menu. Acc
 Official WireGuard, OpenVPN, and/or Sophos engine packages must be installed separately. The app detects the engines already installed on this computer, including Sophos's OpenVPN binary. Engines and drivers are not redistributed in this installer. Running as administrator is the current implementation; a dedicated privileged broker service is a future improvement. One session at a time is supported. Closing the app asks to disconnect. WireGuard/Sophos services can survive an app crash; selecting the same profile allows reconnection/control, but automatic crash recovery is not implemented. No kill switch, traffic-leak guarantees, or unattended reconnect feature is claimed.
 
 ## Build and tests
-Run `powershell -ExecutionPolicy Bypass -File .\build.ps1`. Requires the Windows .NET Framework 4.x compiler. Output is `dist/0.3.2/`. This installer and app are unsigned.
+Run `powershell -ExecutionPolicy Bypass -File .\build.ps1`. Requires the Windows .NET Framework 4.x compiler. Output is `dist/0.5.0/`. This installer and app are unsigned.
 
 `tests/Tests.cs` and `tests/FakeEngine.cs` exercise Windows argument escaping, Sophos status parsing, OpenVPN authentication/state/disconnection using a localhost simulator, cancelled-login cleanup, and desktop initialization. Compile tests with `TEST_ENGINE` and `/main:Tests`; the engine override is excluded from production builds. Pass the simulator executable and a scratch directory, optionally followed by an installed OpenVPN executable for a null-device localhost-only management startup/shutdown check.
 
@@ -48,5 +66,3 @@ Build requirements: Windows .NET Framework 4.x compiler and NSIS 3. `build.ps1` 
 - Installed Sophos Connect `sccli --help`, `enable --help`, `add --help`, and `list --help`.
 
 GPL-3.0; see LICENSE.
-
-

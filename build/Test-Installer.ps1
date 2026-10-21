@@ -1,4 +1,4 @@
-param([string]$NsisCompiler,[string]$BuildDirectory='dist\0.3.2')
+param([string]$NsisCompiler,[string]$BuildDirectory='dist\0.5.0')
 $ErrorActionPreference='Stop'
 Push-Location (Split-Path $PSScriptRoot -Parent)
 try {
@@ -49,6 +49,3 @@ try {
  $reg.Dispose()
  Write-Output "Installer lifecycle passed. Test files: $testRoot"
 } finally {Pop-Location}
-
-
-

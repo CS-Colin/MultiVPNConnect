@@ -12,7 +12,7 @@ using System.Security.AccessControl;
 using System.Security.Principal;
 using System.Text.RegularExpressions;
 
-class VpnSession {
+partial class VpnSession {
  public string State="Disconnected";
  public Action<string> Changed;
  public Func<string,bool,string[]> Credentials;
@@ -47,7 +47,7 @@ class VpnSession {
   var info=new ProcessStartInfo(exe,args){UseShellExecute=false,CreateNoWindow=true,RedirectStandardOutput=true,RedirectStandardError=true,RedirectStandardInput=true,WorkingDirectory=Path.GetDirectoryName(exe)};
   using(var p=Process.Start(info)) {var stdout=p.StandardOutput.ReadToEndAsync();var stderr=p.StandardError.ReadToEndAsync();if(input!=null)p.StandardInput.Write(input);p.StandardInput.Close();if(!p.WaitForExit(20000)){p.Kill();throw new Exception("The VPN engine did not respond within 20 seconds.");}Task.WaitAll(stdout,stderr);return stdout.Result+stderr.Result;}
  }
- void Set(string value){State=value;if(Changed!=null)Changed(value);}
+ void Set(string value){if(State!=value)ResetNetworkFacts();State=value;Metrics.ObserveState(value);if(Changed!=null)Changed(value);}
  public static string Id(Profile profile){using(var hash=SHA256.Create())return "MVC"+BitConverter.ToString(hash.ComputeHash(Encoding.UTF8.GetBytes((String.IsNullOrEmpty(profile.EngineName)?Path.GetFullPath(profile.Path):profile.EngineName).ToLowerInvariant()))).Replace("-","").Substring(0,12);}
  public async Task Connect(Profile profile,string home) {
   Profile=profile;TunnelName=Id(profile);stopping=false;Set("Connecting");
@@ -94,7 +94,7 @@ class VpnSession {
  void EngineOutput(object sender,DataReceivedEventArgs e){string line=e.Data;if(line==null)return;if((line.Contains("Options error:")||line.Contains("ERROR:")||line.Contains("Exiting due to fatal"))&&!line.ToLowerInvariant().Contains("password")){if(Changed!=null)Changed(line);}}
  async Task ReadManagement(StreamReader reader){try{using(reader){string line;while((line=await reader.ReadLineAsync())!=null){if(stopping)break;
 
-if(line.StartsWith(">STATE:")||Regex.IsMatch(line,@"^\d+,[A-Z_]+,")){var parts=(line.StartsWith(">STATE:")?line.Substring(7):line).Split(',');if(parts.Length>1)Set(parts[1]=="CONNECTED"?"Connected":parts[1]=="EXITING"?"Disconnected":parts[1]);}else if(line.StartsWith(">BYTECOUNT:")){if(Changed!=null)Changed("Traffic: "+line.Substring(11)+" bytes received/sent");}else if(line.StartsWith(">PASSWORD:Need ")){var match=Regex.Match(line,"'([^']+)'");if(!match.Success)continue;string kind=match.Groups[1].Value;bool user=line.Contains("username/password");var values=Credentials("VPN authentication: "+kind,user);if(values==null){writer.WriteLine("signal SIGTERM");Set("Authentication cancelled");continue;}if(user&&line.Contains(" SC:")){var challenge=Credentials("One-time code required by your VPN",false);if(challenge==null){writer.WriteLine("signal SIGTERM");Set("Authentication cancelled");continue;}values[1]="SCRV1:"+Convert.ToBase64String(Encoding.UTF8.GetBytes(values[1]))+":"+Convert.ToBase64String(Encoding.UTF8.GetBytes(challenge[1]));challenge[1]=null;}if(user)writer.WriteLine("username "+Quote(kind)+" "+Quote(values[0]));writer.WriteLine("password "+Quote(kind)+" "+Quote(values[1]));values[0]=values[1]=null;}else if(line.StartsWith(">PASSWORD:Verification Failed"))Set("Authentication failed");else if(line.StartsWith(">FATAL:"))Set("VPN engine reported a fatal error");}}}catch(Exception){if(!stopping)Set("Connection to VPN engine lost");}}
+if(line.StartsWith(">STATE:")||Regex.IsMatch(line,@"^\d+,[A-Z_]+,")){ReadState(line);}else if(line.StartsWith(">BYTECOUNT:")){ReadTraffic(line.Substring(11));}else if(line.StartsWith(">PASSWORD:Need ")){var match=Regex.Match(line,"'([^']+)'");if(!match.Success)continue;string kind=match.Groups[1].Value;bool user=line.Contains("username/password");var values=Credentials("VPN authentication: "+kind,user);if(values==null){writer.WriteLine("signal SIGTERM");Set("Authentication cancelled");continue;}if(user&&line.Contains(" SC:")){var challenge=Credentials("One-time code required by your VPN",false);if(challenge==null){writer.WriteLine("signal SIGTERM");Set("Authentication cancelled");continue;}values[1]="SCRV1:"+Convert.ToBase64String(Encoding.UTF8.GetBytes(values[1]))+":"+Convert.ToBase64String(Encoding.UTF8.GetBytes(challenge[1]));challenge[1]=null;}if(user)writer.WriteLine("username "+Quote(kind)+" "+Quote(values[0]));writer.WriteLine("password "+Quote(kind)+" "+Quote(values[1]));values[0]=values[1]=null;}else if(line.StartsWith(">PASSWORD:Verification Failed"))Set("Authentication failed");else if(line.StartsWith(">FATAL:"))Set("VPN engine reported a fatal error");}}}catch(Exception){if(!stopping)Set("Connection to VPN engine lost");}}
  public static string SophosState(string text,string name){bool block=false;foreach(string raw in text.Split('\n')){string line=raw.TrimEnd('\r');if(line.StartsWith("  ")&&!line.StartsWith("    "))block=line.Trim()==name;if(block&&line.TrimStart().StartsWith("VPN state:",StringComparison.OrdinalIgnoreCase)){string state=line.Substring(line.IndexOf(':')+1).Trim();return state.Equals("connected",StringComparison.OrdinalIgnoreCase)?"Connected":state.Equals("disconnected",StringComparison.OrdinalIgnoreCase)?"Disconnected":state;}}return "Status unavailable";}
  public async Task<string> Status(){if(Profile.Kind=="OpenVPN")return daemon==null||daemon.HasExited?"Disconnected":State;
   if(Profile.Kind=="Sophos Connect")return SophosState(await Task.Run(()=>Run(Find("Sophos Connect"),"list -d")),SophosName);
@@ -103,13 +103,3 @@ if(line.StartsWith(">STATE:")||Regex.IsMatch(line,@"^\d+,[A-Z_]+,")){var parts=(
  }
  public async Task Disconnect(){stopping=true;if(Profile==null)return;if(!touched){if(runtime!=null&&Directory.Exists(runtime))Directory.Delete(runtime,true);Set("Disconnected");return;}if(Find(Profile.Kind)==null){Set("Disconnected");return;}Set("Disconnecting");if(Profile.Kind=="WireGuard"){await Task.Run(()=>Run(Find("WireGuard"),"/uninstalltunnelservice "+Arg(TunnelName)));if(await Status()!="Disconnected")throw new Exception("WireGuard tunnel is still running.");}else if(Profile.Kind=="Sophos Connect"){await Task.Run(()=>Run(Find("Sophos Connect"),"disable -n "+Arg(SophosName)));if(await Status()!="Disconnected")throw new Exception("Sophos has not confirmed disconnection. Try Disconnect again.");}else {if(writer!=null)try{writer.WriteLine("signal SIGTERM");}catch(IOException){}catch(ObjectDisposedException){}if(daemon!=null&&!daemon.HasExited&&writer==null)daemon.Kill();if(daemon!=null&&!daemon.HasExited){bool exited=await Task.Run(()=>daemon.WaitForExit(10000));if(!exited)throw new Exception("OpenVPN is still shutting down. Try Disconnect again.");}if(management!=null)management.Close();if(runtime!=null&&Directory.Exists(runtime))Directory.Delete(runtime,true);}Set("Disconnected");}
 }
-
-
-
-
-
-
-
-
-
-
