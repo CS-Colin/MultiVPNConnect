@@ -1,0 +1,5 @@
+using System;using System.IO;using System.Net.Sockets;using System.Text;
+class FakeEngine {
+ static void Main(string[] args){if(args.Length>0&&args[0]=="--echo"){Console.WriteLine(args[1]);return;}int at=Array.IndexOf(args,"--management");int port=int.Parse(args[at+2]);string secret=File.ReadAllText(args[at+3]).Trim();using(var c=new TcpClient("127.0.0.1",port))using(var r=new StreamReader(c.GetStream()))using(var w=new StreamWriter(c.GetStream(),new UTF8Encoding(false)){AutoFlush=true,NewLine="\n"}){w.WriteLine("ENTER PASSWORD:");if(r.ReadLine()!=secret)throw new Exception("Incorrect management secret");w.WriteLine("SUCCESS: password is correct");string line;bool user=false;while((line=r.ReadLine())!=null){if(line=="bytecount 2"||line=="hold off"||line=="state on all")w.WriteLine("SUCCESS: command accepted");if(line=="hold release")w.WriteLine(">PASSWORD:Need 'Auth' username/password");if(line.StartsWith("username \"Auth\""))user=true;if(line.StartsWith("password \"Auth\"")&&user){w.WriteLine(">STATE:123,CONNECTED,SUCCESS,10.1.0.2");w.WriteLine(">BYTECOUNT:100,200");}if(line=="signal SIGTERM"){w.WriteLine(">STATE:124,EXITING,SIGTERM,,");return;}}}}
+}
+
