@@ -21,7 +21,7 @@ class Tests {
    Check(await real.Status()=="Disconnected","Installed OpenVPN engine graceful shutdown");
   }
   // Instantiate the actual UI on an STA thread without activating any tunnel.
-  Exception uiFailure=null;var thread=new Thread(()=>{try{using(var form=new MainWindow()){form.Show();Application.DoEvents();Check(form.Controls.Count>0,"Desktop layout initializes");Check(form.Text=="MultiVPNConnect","Desktop window title");
+  Exception uiFailure=null;var thread=new Thread(()=>{try{CredentialTests.Run();using(var form=new MainWindow()){form.Show();Application.DoEvents();Check(form.Controls.Count>0,"Desktop layout initializes");Check(form.Text=="MultiVPNConnect","Desktop window title");
 var flags=System.Reflection.BindingFlags.Instance|System.Reflection.BindingFlags.NonPublic;
 typeof(MainWindow).GetField("profiles",flags).SetValue(form,new System.Collections.Generic.List<Profile>{new Profile{Name="Office",Kind="OpenVPN",Path="C:\\preview.ovpn"},new Profile{Name="Home",Kind="WireGuard",Path="C:\\preview.conf"}});
 typeof(MainWindow).GetMethod("RefreshList",flags).Invoke(form,null);

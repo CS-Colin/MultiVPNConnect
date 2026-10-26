@@ -1,4 +1,4 @@
-# MultiVPNConnect 0.5.0
+# MultiVPNConnect 0.6.0
 
 Version 0.3.2 loads the window icon directly from an embedded branding resource and includes nine native icon sizes for the taskbar and display scaling. Native Windows small/large window-icon checks passed.
 
@@ -7,7 +7,7 @@ Version 0.3 adds a redesigned dark interface with searchable connections, protoc
 Windows VPN desktop app with in-app Connect, Disconnect, sign-in prompts, connection status, and session events. Uses installed VPN engines without handing you off to their separate graphical interfaces.
 
 ## Install and use
-Run `dist/0.5.0/MultiVPNConnect-Setup.exe`, then launch from the Start menu. Accept Windows administrator permission so the engines can configure adapters and routes. Existing profile references from 0.1 are retained.
+Run `dist/0.6.0/MultiVPNConnect-Setup.exe`, then launch from the Start menu. Accept Windows administrator permission so the engines can configure adapters and routes. Existing profile references from 0.1 are retained.
 
 1. Import a WireGuard `.conf`, OpenVPN `.ovpn`, or Sophos `.scx`, `.tgb`, or `.pro` file. Keep the original file and its certificate dependencies in place.
 2. Alternatively select **Use Sophos profiles** to load names of connections already imported into the installed Sophos engine.
@@ -31,6 +31,18 @@ Server facts refresh at most once every ten seconds while the tunnel is active. 
 
 Speed/reset parsing, route-table decoding, routing classification, endpoint parsing, existing network/tray controls, and installer lifecycle checks passed. No remote tunnel was newly activated during these checks. The existing v0.3.0/v0.3.2 source tags are retained; historical binary releases without retained source snapshots are labeled as archives in their release notes.
 
+## Saved login (0.6.0)
+
+Check **Remember login on this Windows account** in an OpenVPN or Sophos username/password prompt. The app stores that profile's username and base password in Windows Credential Manager (a generic credential persisted on this computer). Later prompts prefill the saved login; you can edit it before continuing. Passwords remain masked unless Show password is selected. Passwords are not added to profiles.json, configuration files, logs, or process command-line arguments by this feature.
+
+For Sophos, enter the base password in Password and any temporary code in the separate One-time code field. Only the base password is saved; the code is appended for that authentication attempt. OpenVPN static-challenge codes and private-key prompts cannot be saved by this feature. Do not paste a combined password+temporary code into the base Password field if you want to remember only the password.
+
+Use **Forget saved login** for the selected profile, or uncheck Remember and continue, to delete its stored username/password. Removing a profile also removes its saved login. Cancelling sign-in does not change saved credentials. A password entered with Remember is saved when Continue is selected, even if the VPN later rejects authentication; correct or forget it on the next prompt.
+
+Saved logins belong to the Windows account running MultiVPNConnect. Using a different account at the administrator prompt uses that account's credential store. Uninstall preserves saved logins and profile data; forget logins before uninstalling or remove the app's generic entries from Windows Credential Manager afterwards.
+
+Verified using isolated dummy credentials: Windows write/read/update/delete, Unicode fields, profile separation, prefill and masking, cancellation, OTP separation, no persistence from code-only prompts, existing tray/connection controls, and installer lifecycle tests. No real VPN password was read or stored during testing. The updated sign-in and minimum-window layouts were rendered and inspected.
+
 ## Engines
 - WireGuard: installs an app-owned tunnel service using the official WireGuard Windows command interface. Status distinguishes an active interface from a recent successful handshake. Configurations copied for the service have restricted filesystem permissions.
 - OpenVPN: starts an installed OpenVPN executable directly and controls it through a password-protected localhost management channel. Handles username/password, private-key passwords, and static OTP challenges. The engine initiates the management connection and terminates if the app connection is lost. Relative certificates resolve against the original profile directory. Engine errors and session events appear in the app. Dynamic challenge-response, browser/SAML, PKCS#11, and external certificate flows are not implemented.
@@ -39,7 +51,7 @@ Speed/reset parsing, route-table decoding, routing classification, endpoint pars
 Official WireGuard, OpenVPN, and/or Sophos engine packages must be installed separately. The app detects the engines already installed on this computer, including Sophos's OpenVPN binary. Engines and drivers are not redistributed in this installer. Running as administrator is the current implementation; a dedicated privileged broker service is a future improvement. One session at a time is supported. Closing the app asks to disconnect. WireGuard/Sophos services can survive an app crash; selecting the same profile allows reconnection/control, but automatic crash recovery is not implemented. No kill switch, traffic-leak guarantees, or unattended reconnect feature is claimed.
 
 ## Build and tests
-Run `powershell -ExecutionPolicy Bypass -File .\build.ps1`. Requires the Windows .NET Framework 4.x compiler. Output is `dist/0.5.0/`. This installer and app are unsigned.
+Run `powershell -ExecutionPolicy Bypass -File .\build.ps1`. Requires the Windows .NET Framework 4.x compiler. Output is `dist/0.6.0/`. This installer and app are unsigned.
 
 `tests/Tests.cs` and `tests/FakeEngine.cs` exercise Windows argument escaping, Sophos status parsing, OpenVPN authentication/state/disconnection using a localhost simulator, cancelled-login cleanup, and desktop initialization. Compile tests with `TEST_ENGINE` and `/main:Tests`; the engine override is excluded from production builds. Pass the simulator executable and a scratch directory, optionally followed by an installed OpenVPN executable for a null-device localhost-only management startup/shutdown check.
 

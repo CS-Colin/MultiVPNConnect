@@ -60,7 +60,7 @@ partial class VpnSession {
   } else if(profile.Kind=="Sophos Connect") {
    SophosName=String.IsNullOrEmpty(profile.EngineName)?TunnelName:profile.EngineName;touched=true;if(await Status()=="Connected"){Set("Connected");return;}
    if(String.IsNullOrEmpty(profile.EngineName)) {string result=await Task.Run(()=>Run(exe,"add -f "+Arg(profile.Path)+" -n "+Arg(SophosName)));if(!await ExistsSophos(exe))throw new Exception("Sophos could not import the profile. "+result.Trim());}
-   var credentials=Credentials("Sophos Connect login (append your OTP to the password if required by your VPN)",true);if(credentials==null)throw new OperationCanceledException("Login cancelled.");
+   var credentials=Credentials("Sophos Connect login",true);if(credentials==null)throw new OperationCanceledException("Login cancelled.");
    string login=credentials[0],pass=credentials[1];credentials[0]=credentials[1]=null;
    // Password goes to redirected input, never the process command line or disk.
    await Task.Run(()=>Run(exe,"enable -n "+Arg(SophosName)+" -u "+Arg(login),pass+Environment.NewLine));pass=null;
