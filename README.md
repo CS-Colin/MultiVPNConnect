@@ -1,4 +1,4 @@
-# MultiVPNConnect 0.6.0
+# MultiVPNConnect 0.6.1
 
 Version 0.3.2 loads the window icon directly from an embedded branding resource and includes nine native icon sizes for the taskbar and display scaling. Native Windows small/large window-icon checks passed.
 
@@ -7,7 +7,7 @@ Version 0.3 adds a redesigned dark interface with searchable connections, protoc
 Windows VPN desktop app with in-app Connect, Disconnect, sign-in prompts, connection status, and session events. Uses installed VPN engines without handing you off to their separate graphical interfaces.
 
 ## Install and use
-Run `dist/0.6.0/MultiVPNConnect-Setup.exe`, then launch from the Start menu. Accept Windows administrator permission so the engines can configure adapters and routes. Existing profile references from 0.1 are retained.
+Run `dist/0.6.1/MultiVPNConnect-Setup.exe`, then launch from the Start menu. Accept Windows administrator permission so the engines can configure adapters and routes. Existing profile references from 0.1 are retained.
 
 1. Import a WireGuard `.conf`, OpenVPN `.ovpn`, or Sophos `.scx`, `.tgb`, or `.pro` file. Keep the original file and its certificate dependencies in place.
 2. Alternatively select **Use Sophos profiles** to load names of connections already imported into the installed Sophos engine.
@@ -43,6 +43,12 @@ Saved logins belong to the Windows account running MultiVPNConnect. Using a diff
 
 Verified using isolated dummy credentials: Windows write/read/update/delete, Unicode fields, profile separation, prefill and masking, cancellation, OTP separation, no persistence from code-only prompts, existing tray/connection controls, and installer lifecycle tests. No real VPN password was read or stored during testing. The updated sign-in and minimum-window layouts were rendered and inspected.
 
+## Updater fix (0.6.1)
+
+Fixes the GitHub asset-list parser: JavaScriptSerializer can return ArrayList for nested release assets, which older versions incorrectly cast to object[]. The updater now processes enumerable asset collections, validates asset dictionaries and exact download URLs, rejects duplicate/missing assets, and matches the checksum by exact installer filename.
+
+Versions affected by the cast error require one manual installer update to 0.6.1 or newer. The old updater cannot download its own fix. Regression tests reproduce the original ArrayList failure and verify the published GitHub response, malformed/missing/duplicate assets, unexpected download origins, and checksum filename handling. A published installer was downloaded and its checksum verified without launching it; installer lifecycle checks passed separately.
+
 ## Engines
 - WireGuard: installs an app-owned tunnel service using the official WireGuard Windows command interface. Status distinguishes an active interface from a recent successful handshake. Configurations copied for the service have restricted filesystem permissions.
 - OpenVPN: starts an installed OpenVPN executable directly and controls it through a password-protected localhost management channel. Handles username/password, private-key passwords, and static OTP challenges. The engine initiates the management connection and terminates if the app connection is lost. Relative certificates resolve against the original profile directory. Engine errors and session events appear in the app. Dynamic challenge-response, browser/SAML, PKCS#11, and external certificate flows are not implemented.
@@ -51,7 +57,7 @@ Verified using isolated dummy credentials: Windows write/read/update/delete, Uni
 Official WireGuard, OpenVPN, and/or Sophos engine packages must be installed separately. The app detects the engines already installed on this computer, including Sophos's OpenVPN binary. Engines and drivers are not redistributed in this installer. Running as administrator is the current implementation; a dedicated privileged broker service is a future improvement. One session at a time is supported. Closing the app asks to disconnect. WireGuard/Sophos services can survive an app crash; selecting the same profile allows reconnection/control, but automatic crash recovery is not implemented. No kill switch, traffic-leak guarantees, or unattended reconnect feature is claimed.
 
 ## Build and tests
-Run `powershell -ExecutionPolicy Bypass -File .\build.ps1`. Requires the Windows .NET Framework 4.x compiler. Output is `dist/0.6.0/`. This installer and app are unsigned.
+Run `powershell -ExecutionPolicy Bypass -File .\build.ps1`. Requires the Windows .NET Framework 4.x compiler. Output is `dist/0.6.1/`. This installer and app are unsigned.
 
 `tests/Tests.cs` and `tests/FakeEngine.cs` exercise Windows argument escaping, Sophos status parsing, OpenVPN authentication/state/disconnection using a localhost simulator, cancelled-login cleanup, and desktop initialization. Compile tests with `TEST_ENGINE` and `/main:Tests`; the engine override is excluded from production builds. Pass the simulator executable and a scratch directory, optionally followed by an installed OpenVPN executable for a null-device localhost-only management startup/shutdown check.
 

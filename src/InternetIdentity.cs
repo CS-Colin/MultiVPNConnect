@@ -25,7 +25,7 @@ try{Hostname=Dns.GetHostName();}catch{Hostname=Environment.MachineName;}}
  public static string ParseAddress(string text){IPAddress ip;if(text==null||!IPAddress.TryParse(text.Trim(),out ip)||IPAddress.IsLoopback(ip)||ip.Equals(IPAddress.Any)||ip.Equals(IPAddress.IPv6Any))return null;return ip.ToString();}
  static async Task<string> Fetch(CancellationToken token){
   ServicePointManager.SecurityProtocol |= SecurityProtocolType.Tls12;
-  using(var client=new HttpClient(new HttpClientHandler{AllowAutoRedirect=false},true)){client.Timeout=TimeSpan.FromSeconds(8);client.MaxResponseContentBufferSize=128;client.DefaultRequestHeaders.UserAgent.ParseAdd("MultiVPNConnect/0.6.0");using(var response=await client.GetAsync("https://api64.ipify.org",token)){response.EnsureSuccessStatusCode();return await response.Content.ReadAsStringAsync();}}
+  using(var client=new HttpClient(new HttpClientHandler{AllowAutoRedirect=false},true)){client.Timeout=TimeSpan.FromSeconds(8);client.MaxResponseContentBufferSize=128;client.DefaultRequestHeaders.UserAgent.ParseAdd("MultiVPNConnect/0.6.1");using(var response=await client.GetAsync("https://api64.ipify.org",token)){response.EnsureSuccessStatusCode();return await response.Content.ReadAsStringAsync();}}
  }
  public void Invalidate(){generation++;if(pending!=null){pending.Cancel();pending.Dispose();pending=null;}PublicAddress=null;CheckedUtc=null;Loading=false;}
  public async Task Refresh(){Invalidate();int request=generation;var cancellation=new CancellationTokenSource();pending=cancellation;Loading=true;
