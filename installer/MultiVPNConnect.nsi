@@ -6,7 +6,7 @@ Unicode true
 !include "Sections.nsh"
 !include "x64.nsh"
 !ifndef APP_VERSION
- !define APP_VERSION "0.6.1"
+ !define APP_VERSION "0.6.2"
 !endif
 !ifndef BUILD_DIR
  !error "Pass BUILD_DIR pointing to compiled app files."

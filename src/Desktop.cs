@@ -42,9 +42,5 @@ partial class MainWindow {
  void RefreshDesktop(){if(tray==null)return;RefreshNetworkFields();CheckInternetIdentity();string state=session==null?"Disconnected":status.Text;string title="MultiVPNConnect — "+state;tray.Text=title.Length>63?title.Substring(0,63):title;trayStatus.Text=state;trayConnect.Enabled=!busy&&session==null&&Selected!=null;trayDisconnect.Enabled=!busy&&session!=null;trayConnect.Text=Selected==null?"Connect selected":"Connect "+(Selected.Name.Length>28?Selected.Name.Substring(0,28)+"…":Selected.Name);
   var snapshot=session==null?new ConnectionSnapshot():session.Metrics.Snapshot();durationValue.Text=ConnectionMetrics.Elapsed(snapshot.Duration);addressValue.Text=snapshot.Address??"Unavailable";receivedValue.Text=ConnectionMetrics.Bytes(snapshot.Received);sentValue.Text=ConnectionMetrics.Bytes(snapshot.Sent);
  }
- protected override void Dispose(bool disposing){if(disposing){if(internet!=null)internet.Dispose();timer.Stop();timer.Dispose();if(detailsTimer!=null){detailsTimer.Stop();detailsTimer.Dispose();}if(tray!=null){tray.Visible=false;tray.Dispose();}if(trayMenu!=null)trayMenu.Dispose();if(detailTips!=null)detailTips.Dispose();}base.Dispose(disposing);}
+ protected override void Dispose(bool disposing){if(disposing){RemoveRecoveryEvents();if(internet!=null)internet.Dispose();timer.Stop();timer.Dispose();if(detailsTimer!=null){detailsTimer.Stop();detailsTimer.Dispose();}if(tray!=null){tray.Visible=false;tray.Dispose();}if(trayMenu!=null)trayMenu.Dispose();if(detailTips!=null)detailTips.Dispose();}base.Dispose(disposing);}
 }
-
-
-
-

@@ -1,4 +1,4 @@
-param([string]$NsisCompiler,[string]$BuildDirectory='dist\0.6.0')
+param([string]$NsisCompiler,[string]$BuildDirectory='dist\0.6.2')
 $ErrorActionPreference='Stop'
 Push-Location (Split-Path $PSScriptRoot -Parent)
 try {

@@ -12,5 +12,6 @@
 | 0.5.0 | Live speeds, server details, latency, adapter DNS and tunnel routes | Exact source in v0.5.0 |
 | 0.6.0 | Per-profile saved logins in Windows Credential Manager | Exact source in v0.6.0 |
 | 0.6.1 | FIX: GitHub updater asset-list parsing | Exact source in v0.6.1 |
+| 0.6.2 | Auto-reconnect, one-click saved login, and profile editing | Exact source in v0.6.2 |
 
 Each release includes its archived Windows installer and SHA256SUMS.txt. Earlier installers are retained for reference; use the latest release for normal installation. Historical archive tags reference the catalog/source checkpoint used when the archive was published, not a claim of reproducible historical source. Existing published releases are left unchanged.

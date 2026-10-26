@@ -9,6 +9,7 @@ class Tests {
   string status="Connections:\n  One\n    VPN state: disconnected\n  Two\n    VPN state: connected\n";
   Check(VpnSession.SophosState(status,"One")=="Disconnected","Disconnected is not confused with connected");Check(VpnSession.SophosState(status,"Two")=="Connected","Sophos state matched by connection name");Check(VpnSession.SophosState(status,"Missing")=="Status unavailable","Missing Sophos status is not reported connected");
   await InternetIdentityTests.Run();
+  UsabilityTests.Policies();
   NetworkFactsTests.Run();
   DesktopTests.Metrics();
   VpnSession.TestEngine=fake;var connected=new TaskCompletionSource<bool>();var session=new VpnSession();session.Changed=s=>{if(s=="Connected")connected.TrySetResult(true);};session.Credentials=(title,user)=>new[]{"test user","dummy\\\"password"};string config=Path.Combine(home,"test.ovpn");File.WriteAllText(config,"client");await session.Connect(new Profile{Name="Test",Kind="OpenVPN",Path=config},home);Check(await Task.WhenAny(connected.Task,Task.Delay(5000))==connected.Task,"OpenVPN management authentication and connected state");Check(await session.Status()=="Connected","Status follows engine acknowledgement");await session.Disconnect();Check(await session.Status()=="Disconnected","Graceful OpenVPN disconnect confirmed by process exit");Check(Directory.GetDirectories(Path.Combine(home,"sessions")).Length==0,"Temporary management key removed");
@@ -31,6 +32,6 @@ search.Text="wireguard";Application.DoEvents();Check(list.Items.Count==1&&((Prof
 search.Text="no matching profile";Application.DoEvents();Check(list.Items.Count==0&&!((Button)typeof(MainWindow).GetField("connect",flags).GetValue(form)).Enabled,"Empty search disables Connect");
 search.Text="";Application.DoEvents();Check(list.Items.Count==2,"Clearing search restores connections");
 ((Label)typeof(MainWindow).GetField("status",flags).GetValue(form)).Text="Connected";Application.DoEvents();Check(((Label)typeof(MainWindow).GetField("statusTitle",flags).GetValue(form)).Text=="Connected","Status card follows session state");
-DesktopTests.Window(form);form.Close();}}catch(Exception ex){uiFailure=ex;}});thread.SetApartmentState(ApartmentState.STA);thread.Start();thread.Join();if(uiFailure!=null)throw uiFailure;
+ReconnectIntegration.Run(form);UsabilityTests.Window(form);DesktopTests.Window(form);form.Close();}}catch(Exception ex){uiFailure=ex;}});thread.SetApartmentState(ApartmentState.STA);thread.Start();thread.Join();if(uiFailure!=null)throw uiFailure;
  }
 }

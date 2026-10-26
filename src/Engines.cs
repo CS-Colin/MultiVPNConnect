@@ -73,7 +73,7 @@ partial class VpnSession {
   runtime=Path.Combine(home,"sessions",Guid.NewGuid().ToString("N"));SecureFolder(runtime);
   string password;using(var rng=RandomNumberGenerator.Create()){var bytes=new byte[32];rng.GetBytes(bytes);password=Convert.ToBase64String(bytes);}string pwfile=Path.Combine(runtime,"management.key");File.WriteAllText(pwfile,password+"\n");
   int port;var listener=new TcpListener(IPAddress.Loopback,0);listener.Server.ExclusiveAddressUse=true;listener.Start();port=((IPEndPoint)listener.LocalEndpoint).Port;
-  daemon=new Process{StartInfo=new ProcessStartInfo(exe,"--config "+Arg(Profile.Path)+" --management 127.0.0.1 "+port+" "+Arg(pwfile)+" --management-hold --management-query-passwords --management-client --auth-nocache --verb 3"){UseShellExecute=false,CreateNoWindow=true,RedirectStandardOutput=true,RedirectStandardError=true,WorkingDirectory=Path.GetDirectoryName(Profile.Path)}};
+  daemon=new Process{StartInfo=new ProcessStartInfo(exe,"--config "+Arg(Profile.Path)+" --management 127.0.0.1 "+port+" "+Arg(pwfile)+" --management-hold --management-query-passwords --management-client --auth-nocache --auth-retry interact --verb 3"){UseShellExecute=false,CreateNoWindow=true,RedirectStandardOutput=true,RedirectStandardError=true,WorkingDirectory=Path.GetDirectoryName(Profile.Path)}};
   try {
    daemon.OutputDataReceived+=EngineOutput;daemon.ErrorDataReceived+=EngineOutput;daemon.Start();touched=true;daemon.BeginOutputReadLine();daemon.BeginErrorReadLine();
    var accept=listener.AcceptTcpClientAsync();

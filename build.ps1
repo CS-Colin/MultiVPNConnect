@@ -23,7 +23,7 @@ try {
  $outPath=(Resolve-Path $OutputDirectory).Path
  $app=Join-Path $outPath 'MultiVPNConnect.exe'
  $setup=Join-Path $outPath 'MultiVPNConnect-Setup.exe'
- & $compiler /nologo /target:winexe "/out:$app" /win32manifest:src\app.manifest /win32icon:installer\assets\app.ico /resource:installer\assets\app.ico,MultiVPNConnect.AppIcon /reference:System.Windows.Forms.dll /reference:System.Drawing.dll /reference:System.Web.Extensions.dll /reference:System.ServiceProcess.dll /reference:System.Net.Http.dll src\App.cs src\Engines.cs src\Theme.cs src\Branding.cs src\Details.cs src\Desktop.cs src\InternetIdentity.cs src\NetworkFacts.cs src\NetworkFields.cs src\Credentials.cs src\LoginDialog.cs src\UpdateRelease.cs
+ & $compiler /nologo /target:winexe "/out:$app" /win32manifest:src\app.manifest /win32icon:installer\assets\app.ico /resource:installer\assets\app.ico,MultiVPNConnect.AppIcon /reference:System.Windows.Forms.dll /reference:System.Drawing.dll /reference:System.Web.Extensions.dll /reference:System.ServiceProcess.dll /reference:System.Net.Http.dll src\App.cs src\Engines.cs src\Theme.cs src\Branding.cs src\Details.cs src\Desktop.cs src\InternetIdentity.cs src\NetworkFacts.cs src\NetworkFields.cs src\Credentials.cs src\LoginDialog.cs src\UpdateRelease.cs src\ProfileEditor.cs src\Recovery.cs
  if ($LASTEXITCODE -ne 0) { throw 'App compilation failed' }
  & $compiler /nologo /target:exe "/out:$outPath\InstallerGuard.exe" installer\InstallerGuard.cs
  if ($LASTEXITCODE -ne 0) { throw 'Installer guard compilation failed' }
